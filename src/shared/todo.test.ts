@@ -38,4 +38,8 @@ describe("summarise", () => {
   it("counts only todos that are not done as remaining", () => {
     expect(summarise([todo(1, false), todo(2, true), todo(3, false)]).remaining).toBe(2);
   });
+
+  it("reports zero remaining when every todo is done", () => {
+    expect(summarise([todo(1, true), todo(2, true)])).toEqual({ total: 2, remaining: 0 });
+  });
 });
