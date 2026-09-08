@@ -15,4 +15,6 @@ export const api = {
     request<Todo>("/api/todos", { method: "POST", body: JSON.stringify({ title }) }),
   setDone: (id: number, done: boolean) =>
     request<Todo>(`/api/todos/${id}`, { method: "PATCH", body: JSON.stringify({ done }) }),
+  rename: (id: number, title: string) =>
+    request<Todo>(`/api/todos/${id}`, { method: "PATCH", body: JSON.stringify({ title }) }),
 };
