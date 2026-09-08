@@ -35,8 +35,7 @@ describe("summarise", () => {
     expect(summarise([])).toEqual({ total: 0, remaining: 0 });
   });
 
-  // Skipped because it fails. See the issue "Remaining count shows the wrong number".
-  it.skip("counts only todos that are not done as remaining", () => {
+  it("counts only todos that are not done as remaining", () => {
     expect(summarise([todo(1, false), todo(2, true), todo(3, false)]).remaining).toBe(2);
   });
 });
