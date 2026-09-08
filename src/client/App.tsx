@@ -1,11 +1,12 @@
 import { useEffect, useState, type FormEvent } from "react";
 
-import { summarise, type Todo } from "../shared/todo";
+import { summarise, type Priority, type Todo } from "../shared/todo";
 import { api } from "./api";
 
 export function App() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [title, setTitle] = useState("");
+  const [priority, setPriority] = useState<Priority>("medium");
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [draft, setDraft] = useState("");
@@ -18,7 +19,7 @@ export function App() {
     event.preventDefault();
     if (title.trim() === "") return;
     try {
-      const created = await api.create(title);
+      const created = await api.create(title, priority);
       setTodos((current) => [...current, created]);
       setTitle("");
     } catch (e) {
@@ -51,6 +52,15 @@ export function App() {
     }
   };
 
+  const changePriority = async (todo: Todo, next: Priority) => {
+    try {
+      const updated = await api.setPriority(todo.id, next);
+      setTodos((current) => current.map((t) => (t.id === updated.id ? updated : t)));
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  };
+
   const summary = summarise(todos);
 
   return (
@@ -64,6 +74,15 @@ export function App() {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
+        <select
+          aria-label="Priority"
+          value={priority}
+          onChange={(e) => setPriority(e.target.value as Priority)}
+        >
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
         <button type="submit">Add</button>
       </form>
 
@@ -98,6 +117,16 @@ export function App() {
                       {todo.title}
                     </span>
                   </label>{" "}
+                  <span>[{todo.priority}]</span>{" "}
+                  <select
+                    aria-label={`Priority for ${todo.title}`}
+                    value={todo.priority}
+                    onChange={(e) => changePriority(todo, e.target.value as Priority)}
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                  </select>{" "}
                   <button type="button" onClick={() => startEditing(todo)}>
                     Edit
                   </button>

@@ -5,11 +5,13 @@ import { openDatabase } from "./db";
 
 let app: ReturnType<typeof createApp>;
 
-const post = (title: unknown) =>
+const post = (title: unknown, priority?: unknown) =>
   app.request("/api/todos", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ title }),
+    body: JSON.stringify(
+      priority === undefined ? { title } : { title, priority },
+    ),
   });
 
 const patch = (id: number, body: unknown) =>
@@ -67,5 +69,41 @@ describe("todos API", () => {
   it("returns 404 for an unknown todo", async () => {
     const res = await patch(99, { done: true });
     expect(res.status).toBe(404);
+  });
+
+  it("defaults to medium priority", async () => {
+    const created = await post("Buy milk");
+    expect(created.status).toBe(201);
+    expect(await created.json()).toMatchObject({ priority: "medium" });
+  });
+
+  it("creates a todo with a given priority", async () => {
+    const created = await post("Buy milk", "high");
+    expect(created.status).toBe(201);
+    expect(await created.json()).toMatchObject({ title: "Buy milk", priority: "high" });
+  });
+
+  it("rejects an invalid priority when creating", async () => {
+    const res = await post("Buy milk", "urgent");
+    expect(res.status).toBe(400);
+  });
+
+  it("updates a todo's priority", async () => {
+    await post("Buy milk");
+    const res = await patch(1, { priority: "low" });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ id: 1, priority: "low" });
+  });
+
+  it("rejects an invalid priority when updating", async () => {
+    await post("Buy milk");
+    const res = await patch(1, { priority: "urgent" });
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects a patch with no known fields", async () => {
+    await post("Buy milk");
+    const res = await patch(1, { colour: "red" });
+    expect(res.status).toBe(400);
   });
 });

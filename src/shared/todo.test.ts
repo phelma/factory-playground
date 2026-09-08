@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { normaliseTitle, summarise, type Todo } from "./todo";
+import { normalisePriority, normaliseTitle, summarise, type Todo } from "./todo";
 
 const todo = (id: number, done: boolean): Todo => ({
   id,
   title: `Todo ${id}`,
   done,
+  priority: "medium",
   createdAt: "2026-09-08T00:00:00.000Z",
 });
 
@@ -23,6 +24,21 @@ describe("normaliseTitle", () => {
   it("rejects titles over the length limit", () => {
     expect(normaliseTitle("x".repeat(201))).toBeNull();
     expect(normaliseTitle("x".repeat(200))).toHaveLength(200);
+  });
+});
+
+describe("normalisePriority", () => {
+  it("accepts low, medium and high", () => {
+    expect(normalisePriority("low")).toBe("low");
+    expect(normalisePriority("medium")).toBe("medium");
+    expect(normalisePriority("high")).toBe("high");
+  });
+
+  it("rejects anything else", () => {
+    expect(normalisePriority("urgent")).toBeNull();
+    expect(normalisePriority("")).toBeNull();
+    expect(normalisePriority(undefined)).toBeNull();
+    expect(normalisePriority(1)).toBeNull();
   });
 });
 

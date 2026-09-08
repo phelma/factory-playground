@@ -1,4 +1,4 @@
-import type { Todo } from "../shared/todo";
+import type { Priority, Todo } from "../shared/todo";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(path, {
@@ -11,10 +11,15 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   list: () => request<Todo[]>("/api/todos"),
-  create: (title: string) =>
-    request<Todo>("/api/todos", { method: "POST", body: JSON.stringify({ title }) }),
+  create: (title: string, priority?: Priority) =>
+    request<Todo>(
+      "/api/todos",
+      { method: "POST", body: JSON.stringify(priority ? { title, priority } : { title }) },
+    ),
   setDone: (id: number, done: boolean) =>
     request<Todo>(`/api/todos/${id}`, { method: "PATCH", body: JSON.stringify({ done }) }),
   rename: (id: number, title: string) =>
     request<Todo>(`/api/todos/${id}`, { method: "PATCH", body: JSON.stringify({ title }) }),
+  setPriority: (id: number, priority: Priority) =>
+    request<Todo>(`/api/todos/${id}`, { method: "PATCH", body: JSON.stringify({ priority }) }),
 };
