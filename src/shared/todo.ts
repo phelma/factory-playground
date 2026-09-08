@@ -14,7 +14,7 @@ export const MAX_TITLE_LENGTH = 200;
 
 export function normaliseTitle(raw: unknown): string | null {
   if (typeof raw !== "string") return null;
-  const title = raw;
+  const title = raw.trim();
   if (title.length === 0 || title.length > MAX_TITLE_LENGTH) return null;
   return title;
 }
