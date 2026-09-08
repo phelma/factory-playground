@@ -37,7 +37,7 @@ export function App() {
 
   return (
     <main>
-      <h1>Todos</h1>
+      <h1>Things to do</h1>
 
       <form onSubmit={addTodo}>
         <input
