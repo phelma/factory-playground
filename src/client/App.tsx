@@ -7,6 +7,8 @@ export function App() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [title, setTitle] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [draft, setDraft] = useState("");
 
   useEffect(() => {
     api.list().then(setTodos).catch((e: Error) => setError(e.message));
@@ -28,6 +30,22 @@ export function App() {
     try {
       const updated = await api.setDone(todo.id, !todo.done);
       setTodos((current) => current.map((t) => (t.id === updated.id ? updated : t)));
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  };
+
+  const startEditing = (todo: Todo) => {
+    setEditingId(todo.id);
+    setDraft(todo.title);
+  };
+
+  const saveEdit = async (event: FormEvent, todo: Todo) => {
+    event.preventDefault();
+    try {
+      const updated = await api.rename(todo.id, draft);
+      setTodos((current) => current.map((t) => (t.id === updated.id ? updated : t)));
+      setEditingId(null);
     } catch (e) {
       setError((e as Error).message);
     }
@@ -57,12 +75,31 @@ export function App() {
         <ul>
           {todos.map((todo) => (
             <li key={todo.id}>
-              <label>
-                <input type="checkbox" checked={todo.done} onChange={() => toggle(todo)} />
-                <span style={{ textDecoration: todo.done ? "line-through" : "none" }}>
-                  {todo.title}
-                </span>
-              </label>
+              {editingId === todo.id ? (
+                <form onSubmit={(e) => saveEdit(e, todo)}>
+                  <input
+                    aria-label="Todo title"
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") setEditingId(null);
+                    }}
+                  />
+                  <button type="submit">Save</button>
+                </form>
+              ) : (
+                <>
+                  <label>
+                    <input type="checkbox" checked={todo.done} onChange={() => toggle(todo)} />
+                    <span style={{ textDecoration: todo.done ? "line-through" : "none" }}>
+                      {todo.title}
+                    </span>
+                  </label>{" "}
+                  <button type="button" onClick={() => startEditing(todo)}>
+                    Edit
+                  </button>
+                </>
+              )}
             </li>
           ))}
         </ul>

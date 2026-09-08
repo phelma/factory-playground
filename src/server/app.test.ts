@@ -51,6 +51,19 @@ describe("todos API", () => {
     expect(await res.json()).toMatchObject({ id: 1, done: true });
   });
 
+  it("renames a todo", async () => {
+    await post("Buy milk");
+    const res = await patch(1, { title: "Buy oat milk" });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ id: 1, title: "Buy oat milk", done: false });
+  });
+
+  it("rejects an invalid title when renaming", async () => {
+    await post("Buy milk");
+    const res = await patch(1, { title: "   " });
+    expect(res.status).toBe(400);
+  });
+
   it("returns 404 for an unknown todo", async () => {
     const res = await patch(99, { done: true });
     expect(res.status).toBe(404);
