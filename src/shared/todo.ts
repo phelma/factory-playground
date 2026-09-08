@@ -22,6 +22,6 @@ export function normaliseTitle(raw: unknown): string | null {
 export function summarise(todos: Todo[]): TodoSummary {
   return {
     total: todos.length,
-    remaining: todos.filter((todo) => todo.done).length,
+    remaining: todos.filter((todo) => !todo.done).length,
   };
 }
