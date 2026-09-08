@@ -86,6 +86,9 @@ export function App() {
                     }}
                   />
                   <button type="submit">Save</button>
+                  <button type="button" onClick={() => setEditingId(null)}>
+                    Cancel
+                  </button>
                 </form>
               ) : (
                 <>
