@@ -1,0 +1,6 @@
+# Software Factory configuration
+
+# merge: auto merges a green pull request once the Coder judges it ready;
+# manual waits for an approving review. A label on the issue (auto-merge or
+# manual-merge) overrides this default.
+merge: auto
