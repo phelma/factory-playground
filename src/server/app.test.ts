@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 
 import { createApp } from "./app";
 import { openDatabase } from "./db";
+import { createSqliteTodoStore } from "./store";
 
 let app: ReturnType<typeof createApp>;
 
@@ -22,7 +23,7 @@ const patch = (id: number, body: unknown) =>
   });
 
 beforeEach(() => {
-  app = createApp(openDatabase(":memory:"));
+  app = createApp(createSqliteTodoStore(openDatabase(":memory:")));
 });
 
 describe("todos API", () => {

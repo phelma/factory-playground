@@ -3,8 +3,9 @@ import { serveStatic } from "@hono/node-server/serve-static";
 
 import { createApp } from "./app";
 import { openDatabase } from "./db";
+import { createSqliteTodoStore } from "./store";
 
-const app = createApp(openDatabase());
+const app = createApp(createSqliteTodoStore(openDatabase()));
 
 if (process.env.NODE_ENV === "production") {
   app.use("/*", serveStatic({ root: "./dist" }));
