@@ -1,0 +1,10 @@
+# Local development needs no secrets.
+#
+# The simulated D1 store used by `npm run dev` (wrangler dev) is local and
+# requires no credentials. Copy this file to `.dev.vars` only if you later add
+# Worker secrets for local iteration:
+#
+#   cp .dev.vars.example .dev.vars
+#
+# Production deploys do not use this file. The deploy job authenticates with
+# the CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID CI secrets.
