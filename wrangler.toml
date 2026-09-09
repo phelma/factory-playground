@@ -1,0 +1,26 @@
+# Cloudflare Worker for the factory-playground todo app (deploy slice 2).
+#
+# - `main` is the Worker entry: it answers the Todo API from the D1 store.
+# - `[assets]` serves the built web client (`npm run build` -> ./dist).
+#   Unmatched non-API routes fall back to the client shell (SPA behaviour),
+#   while `/api/*` always runs the Worker first and never returns the shell.
+# - The `DB` binding is the durable managed Todo store. Its schema comes
+#   from versioned SQL in ./migrations, applied locally with
+#   `npm run d1:migrate:local` and remotely with `npm run d1:migrate:remote`.
+# - First-time remote setup: run `npx wrangler d1 create factory-playground-todos`,
+#   then fill in `database_id` below before the first preview deploy.
+
+name = "factory-playground"
+main = "src/server/worker.ts"
+compatibility_date = "2026-09-01"
+
+[assets]
+directory = "./dist"
+not_found_handling = "single-page-application"
+run_worker_first = ["/api/*"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "factory-playground-todos"
+migrations_dir = "migrations"
+# database_id = "<fill in after `wrangler d1 create factory-playground-todos`>"
