@@ -1,13 +1,19 @@
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 
 import { normalisePriority, normaliseTitle, type Priority } from "../shared/todo";
 import type { TodoStore } from "./store";
 
-export function createApp(store: TodoStore) {
+export type StoreResolver = TodoStore | ((c: Context) => TodoStore | Promise<TodoStore>);
+
+async function resolveStore(resolver: StoreResolver, c: Context): Promise<TodoStore> {
+  return typeof resolver === "function" ? await resolver(c) : resolver;
+}
+
+export function createApp(store: StoreResolver) {
   const app = new Hono();
 
   app.get("/api/todos", async (c) => {
-    return c.json(await store.list());
+    return c.json(await (await resolveStore(store, c)).list());
   });
 
   app.post("/api/todos", async (c) => {
@@ -22,7 +28,7 @@ export function createApp(store: TodoStore) {
       priority = parsed;
     }
 
-    return c.json(await store.create({ title, priority }), 201);
+    return c.json(await (await resolveStore(store, c)).create({ title, priority }), 201);
   });
 
   app.patch("/api/todos/:id", async (c) => {
@@ -50,7 +56,7 @@ export function createApp(store: TodoStore) {
       if (priority === null) return c.json({ error: "priority is invalid" }, 400);
     }
 
-    const updated = await store.update(id, {
+    const updated = await (await resolveStore(store, c)).update(id, {
       ...(hasTitle ? { title: title as string } : {}),
       ...(hasDone ? { done: body.done as boolean } : {}),
       ...(hasPriority ? { priority: priority as Priority } : {}),
