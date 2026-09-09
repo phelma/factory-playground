@@ -1,41 +1,13 @@
 import { Hono } from "hono";
 
-import { normalisePriority, normaliseTitle, type Priority, type Todo } from "../shared/todo";
-import type { Database } from "./db";
+import { normalisePriority, normaliseTitle, type Priority } from "../shared/todo";
+import type { TodoStore } from "./store";
 
-type TodoRow = {
-  id: number;
-  title: string;
-  done: number;
-  priority: string;
-  created_at: string;
-};
-
-function rowToTodo(row: TodoRow): Todo {
-  return {
-    id: row.id,
-    title: row.title,
-    done: row.done === 1,
-    priority: normalisePriority(row.priority) ?? "medium",
-    createdAt: row.created_at,
-  };
-}
-
-export function createApp(db: Database) {
+export function createApp(store: TodoStore) {
   const app = new Hono();
 
-  const selectAll = db.prepare("SELECT * FROM todos ORDER BY id");
-  const selectOne = db.prepare("SELECT * FROM todos WHERE id = ?");
-  const insert = db.prepare("INSERT INTO todos (title, priority) VALUES (?, ?)");
-
-  const findTodo = (id: number): Todo | null => {
-    const row = selectOne.get(id) as TodoRow | undefined;
-    return row ? rowToTodo(row) : null;
-  };
-
-  app.get("/api/todos", (c) => {
-    const rows = selectAll.all() as TodoRow[];
-    return c.json(rows.map(rowToTodo));
+  app.get("/api/todos", async (c) => {
+    return c.json(await store.list());
   });
 
   app.post("/api/todos", async (c) => {
@@ -50,8 +22,7 @@ export function createApp(db: Database) {
       priority = parsed;
     }
 
-    const result = insert.run(title, priority);
-    return c.json(findTodo(Number(result.lastInsertRowid)), 201);
+    return c.json(await store.create({ title, priority }), 201);
   });
 
   app.patch("/api/todos/:id", async (c) => {
@@ -79,24 +50,13 @@ export function createApp(db: Database) {
       if (priority === null) return c.json({ error: "priority is invalid" }, 400);
     }
 
-    const sets: string[] = [];
-    const values: (string | number)[] = [];
-    if (hasTitle) {
-      sets.push("title = ?");
-      values.push(title as string);
-    }
-    if (hasDone) {
-      sets.push("done = ?");
-      values.push(body.done ? 1 : 0);
-    }
-    if (hasPriority) {
-      sets.push("priority = ?");
-      values.push(priority as string);
-    }
-    values.push(id);
-    const result = db.prepare(`UPDATE todos SET ${sets.join(", ")} WHERE id = ?`).run(...values);
-    if (result.changes === 0) return c.json({ error: "not found" }, 404);
-    return c.json(findTodo(id));
+    const updated = await store.update(id, {
+      ...(hasTitle ? { title: title as string } : {}),
+      ...(hasDone ? { done: body.done as boolean } : {}),
+      ...(hasPriority ? { priority: priority as Priority } : {}),
+    });
+    if (updated === null) return c.json({ error: "not found" }, 404);
+    return c.json(updated);
   });
 
   return app;
