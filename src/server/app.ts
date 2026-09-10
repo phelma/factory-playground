@@ -1,6 +1,6 @@
 import { Hono, type Context } from "hono";
 
-import { normalisePriority, normaliseTitle, type Priority } from "../shared/todo";
+import { normalisePriority, normaliseTitle, summarise, type Priority } from "../shared/todo";
 import type { TodoStore } from "./store";
 
 export type StoreResolver = TodoStore | ((c: Context) => TodoStore | Promise<TodoStore>);
@@ -14,6 +14,12 @@ export function createApp(store: StoreResolver) {
 
   app.get("/api/todos", async (c) => {
     return c.json(await (await resolveStore(store, c)).list());
+  });
+
+  app.get("/api/todos/remaining", async (c) => {
+    const todos = await (await resolveStore(store, c)).list();
+    const { remaining } = summarise(todos);
+    return c.json({ remaining });
   });
 
   app.post("/api/todos", async (c) => {

@@ -263,6 +263,23 @@ for (const { name, build } of backends) {
       expect((await patch(1, {})).status).toBe(400);
     });
 
+    it("reports zero remaining todos when empty", async () => {
+      const res = await app.request("/api/todos/remaining");
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ remaining: 0 });
+    });
+
+    it("reports the remaining (not-done) todo count", async () => {
+      await post("First");
+      await post("Second");
+      await post("Third");
+      await patch(2, { done: true });
+
+      const res = await app.request("/api/todos/remaining");
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ remaining: 2 });
+    });
+
     it("shares writes across requests on the same store", async () => {
       await post("First", "low");
       await post("Second", "high");
