@@ -66,6 +66,11 @@ function createFakeD1(): D1DatabaseBinding {
             });
             return { meta: { last_row_id: id, changes: 1 } };
           }
+          if (sql.startsWith("DELETE FROM todos")) {
+            const id = params[0] as number;
+            const deleted = rows.delete(id);
+            return { meta: { last_row_id: 0, changes: deleted ? 1 : 0 } };
+          }
           throw new Error(`unsupported query: ${sql}`);
         },
       };
@@ -107,6 +112,8 @@ for (const { name, build } of backends) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
       });
+
+    const remove = (id: number) => app.request(`/api/todos/${id}`, { method: "DELETE" });
 
     beforeEach(() => {
       app = build();
@@ -290,6 +297,17 @@ for (const { name, build } of backends) {
         { id: 1, title: "First", done: true, priority: "low" },
         { id: 2, title: "Second", done: false, priority: "high" },
       ]);
+    });
+
+    it("deletes a todo", async () => {
+      await post("Buy milk");
+      const res = await remove(1);
+      expect(res.status).toBe(204);
+      expect(await (await app.request("/api/todos")).json()).toEqual([]);
+    });
+
+    it("returns 404 when deleting an unknown todo", async () => {
+      expect((await remove(99)).status).toBe(404);
     });
   });
 }

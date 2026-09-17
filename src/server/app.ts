@@ -71,5 +71,12 @@ export function createApp(store: StoreResolver) {
     return c.json(updated);
   });
 
+  app.delete("/api/todos/:id", async (c) => {
+    const id = Number(c.req.param("id"));
+    const deleted = await (await resolveStore(store, c)).remove(id);
+    if (!deleted) return c.json({ error: "not found" }, 404);
+    return c.body(null, 204);
+  });
+
   return app;
 }

@@ -90,6 +90,15 @@ export function App() {
     }
   };
 
+  const removeTodo = async (todo: Todo) => {
+    try {
+      await api.remove(todo.id);
+      setTodos((current) => current.filter((t) => t.id !== todo.id));
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  };
+
   const summary = summarise(todos);
 
   return (
@@ -173,6 +182,9 @@ export function App() {
                   </select>{" "}
                   <button type="button" onClick={() => startEditing(todo)}>
                     Edit
+                  </button>{" "}
+                  <button type="button" onClick={() => removeTodo(todo)}>
+                    Delete
                   </button>
                 </>
               )}
