@@ -1,7 +1,13 @@
 import { useEffect, useState, type FormEvent } from "react";
 
 import { summarise, type Priority, type Todo } from "../shared/todo";
-import { resolveTheme } from "../shared/theme";
+import {
+  parseThemePreference,
+  readThemePreference,
+  resolveTheme,
+  writeThemePreference,
+  type ThemePreference,
+} from "../shared/theme";
 import { api } from "./api";
 
 export function App() {
@@ -11,6 +17,9 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [draft, setDraft] = useState("");
+  const [preference, setPreference] = useState<ThemePreference>(() =>
+    readThemePreference(window.localStorage),
+  );
 
   useEffect(() => {
     api.list().then(setTodos).catch((e: Error) => setError(e.message));
@@ -20,14 +29,20 @@ export function App() {
     const query = window.matchMedia("(prefers-color-scheme: dark)");
     const apply = () => {
       document.documentElement.dataset.theme = resolveTheme(
-        "system",
+        preference,
         query.matches ? "dark" : "light",
       );
     };
     apply();
     query.addEventListener("change", apply);
     return () => query.removeEventListener("change", apply);
-  }, []);
+  }, [preference]);
+
+  const handlePreferenceChange = (value: string) => {
+    const next = parseThemePreference(value);
+    setPreference(next);
+    writeThemePreference(window.localStorage, next);
+  };
 
   const addTodo = async (event: FormEvent) => {
     event.preventDefault();
@@ -79,7 +94,22 @@ export function App() {
 
   return (
     <main>
-      <h1>Things to do</h1>
+      <header>
+        <h1>Things to do</h1>
+        <label htmlFor="theme-select">
+          Theme{" "}
+          <select
+            id="theme-select"
+            aria-label="Theme"
+            value={preference}
+            onChange={(e) => handlePreferenceChange(e.target.value)}
+          >
+            <option value="system">System</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </label>
+      </header>
 
       <form onSubmit={addTodo}>
         <input
