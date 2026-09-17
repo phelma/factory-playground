@@ -44,6 +44,25 @@ h1 {
   margin: 0 0 1rem;
 }
 
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+header h1 {
+  margin: 0;
+}
+
+header label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--muted);
+}
+
 form {
   display: flex;
   flex-wrap: wrap;

@@ -1,8 +1,18 @@
 import { useEffect, useState, type FormEvent } from "react";
 
 import { summarise, type Priority, type Todo } from "../shared/todo";
-import { resolveTheme } from "../shared/theme";
+import { parseThemePreference, resolveTheme, type ThemePreference } from "../shared/theme";
 import { api } from "./api";
+
+const THEME_STORAGE_KEY = "theme-preference";
+
+function readThemePreference(): ThemePreference {
+  try {
+    return parseThemePreference(localStorage.getItem(THEME_STORAGE_KEY));
+  } catch {
+    return "system";
+  }
+}
 
 export function App() {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -11,6 +21,7 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [draft, setDraft] = useState("");
+  const [themePreference, setThemePreference] = useState<ThemePreference>(readThemePreference);
 
   useEffect(() => {
     api.list().then(setTodos).catch((e: Error) => setError(e.message));
@@ -20,14 +31,25 @@ export function App() {
     const query = window.matchMedia("(prefers-color-scheme: dark)");
     const apply = () => {
       document.documentElement.dataset.theme = resolveTheme(
-        "system",
+        themePreference,
         query.matches ? "dark" : "light",
       );
     };
     apply();
+    if (themePreference !== "system") return;
     query.addEventListener("change", apply);
     return () => query.removeEventListener("change", apply);
-  }, []);
+  }, [themePreference]);
+
+  const changeTheme = (value: string) => {
+    const next = parseThemePreference(value);
+    setThemePreference(next);
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, next);
+    } catch {
+      // Storage unavailable (e.g. private mode): keep the in-memory choice.
+    }
+  };
 
   const addTodo = async (event: FormEvent) => {
     event.preventDefault();
@@ -79,7 +101,21 @@ export function App() {
 
   return (
     <main>
-      <h1>Things to do</h1>
+      <header>
+        <h1>Things to do</h1>
+        <label htmlFor="theme-select">
+          Theme{" "}
+          <select
+            id="theme-select"
+            value={themePreference}
+            onChange={(e) => changeTheme(e.target.value)}
+          >
+            <option value="system">System</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </label>
+      </header>
 
       <form onSubmit={addTodo}>
         <input
