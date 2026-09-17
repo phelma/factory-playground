@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 
 import { summarise, type Priority, type Todo } from "../shared/todo";
+import { resolveTheme } from "../shared/theme";
 import { api } from "./api";
 
 export function App() {
@@ -13,6 +14,19 @@ export function App() {
 
   useEffect(() => {
     api.list().then(setTodos).catch((e: Error) => setError(e.message));
+  }, []);
+
+  useEffect(() => {
+    const query = window.matchMedia("(prefers-color-scheme: dark)");
+    const apply = () => {
+      document.documentElement.dataset.theme = resolveTheme(
+        "system",
+        query.matches ? "dark" : "light",
+      );
+    };
+    apply();
+    query.addEventListener("change", apply);
+    return () => query.removeEventListener("change", apply);
   }, []);
 
   const addTodo = async (event: FormEvent) => {
