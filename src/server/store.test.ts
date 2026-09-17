@@ -66,6 +66,11 @@ function createFakeD1(): D1DatabaseBinding {
             });
             return { meta: { last_row_id: id, changes: 1 } };
           }
+          if (sql.startsWith("DELETE FROM todos")) {
+            const id = params[0] as number;
+            const deleted = rows.delete(id);
+            return { meta: { last_row_id: 0, changes: deleted ? 1 : 0 } };
+          }
           throw new Error(`unsupported query: ${sql}`);
         },
       };
@@ -127,6 +132,16 @@ for (const { name, build } of backends) {
 
     it("returns null for an unknown todo", async () => {
       await expect(store.update(99, { done: true })).resolves.toBeNull();
+    });
+
+    it("removes a todo", async () => {
+      await store.create({ title: "Buy milk", priority: "medium" });
+      await expect(store.remove(1)).resolves.toBe(true);
+      await expect(store.list()).resolves.toEqual([]);
+    });
+
+    it("returns false when removing an unknown todo", async () => {
+      await expect(store.remove(99)).resolves.toBe(false);
     });
   });
 }

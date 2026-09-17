@@ -22,4 +22,8 @@ export const api = {
     request<Todo>(`/api/todos/${id}`, { method: "PATCH", body: JSON.stringify({ title }) }),
   setPriority: (id: number, priority: Priority) =>
     request<Todo>(`/api/todos/${id}`, { method: "PATCH", body: JSON.stringify({ priority }) }),
+  remove: async (id: number): Promise<void> => {
+    const res = await fetch(`/api/todos/${id}`, { method: "DELETE" });
+    if (!res.ok) throw new Error(`DELETE /api/todos/${id} failed with ${res.status}`);
+  },
 };
