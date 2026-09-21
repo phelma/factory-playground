@@ -29,6 +29,7 @@ export interface TodoStore {
   list(): Promise<Todo[]>;
   create(input: { title: string; priority: Priority }): Promise<Todo>;
   update(id: number, patch: TodoPatch): Promise<Todo | null>;
+  remove(id: number): Promise<boolean>;
 }
 
 export interface D1PreparedStatement {
@@ -91,6 +92,14 @@ export function createD1TodoStore(db: D1DatabaseBinding): TodoStore {
       if (result.meta.changes === 0) return null;
       return findTodo(id);
     },
+
+    async remove(id: number): Promise<boolean> {
+      const result = await db
+        .prepare("DELETE FROM todos WHERE id = ?")
+        .bind(id)
+        .run();
+      return result.meta.changes > 0;
+    },
   };
 }
 
@@ -135,6 +144,11 @@ export function createSqliteTodoStore(db: Database): TodoStore {
       const result = db.prepare(`UPDATE todos SET ${sets.join(", ")} WHERE id = ?`).run(...values);
       if (result.changes === 0) return null;
       return findTodo(id);
+    },
+
+    async remove(id: number): Promise<boolean> {
+      const result = db.prepare("DELETE FROM todos WHERE id = ?").run(id);
+      return result.changes > 0;
     },
   };
 }

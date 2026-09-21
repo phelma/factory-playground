@@ -17,7 +17,7 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [draft, setDraft] = useState("");
-  const [themePreference, setThemePreference] = useState<ThemePreference>(() =>
+  const [preference, setPreference] = useState<ThemePreference>(() =>
     readThemePreference(window.localStorage),
   );
 
@@ -29,19 +29,18 @@ export function App() {
     const query = window.matchMedia("(prefers-color-scheme: dark)");
     const apply = () => {
       document.documentElement.dataset.theme = resolveTheme(
-        themePreference,
+        preference,
         query.matches ? "dark" : "light",
       );
     };
     apply();
-    if (themePreference !== "system") return;
     query.addEventListener("change", apply);
     return () => query.removeEventListener("change", apply);
-  }, [themePreference]);
+  }, [preference]);
 
-  const changeTheme = (value: string) => {
+  const handlePreferenceChange = (value: string) => {
     const next = parseThemePreference(value);
-    setThemePreference(next);
+    setPreference(next);
     writeThemePreference(window.localStorage, next);
   };
 
@@ -91,6 +90,15 @@ export function App() {
     }
   };
 
+  const removeTodo = async (todo: Todo) => {
+    try {
+      await api.remove(todo.id);
+      setTodos((current) => current.filter((t) => t.id !== todo.id));
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  };
+
   const summary = summarise(todos);
 
   return (
@@ -102,8 +110,8 @@ export function App() {
           <select
             id="theme-select"
             aria-label="Theme"
-            value={themePreference}
-            onChange={(e) => changeTheme(e.target.value)}
+            value={preference}
+            onChange={(e) => handlePreferenceChange(e.target.value)}
           >
             <option value="system">System</option>
             <option value="light">Light</option>
@@ -174,6 +182,9 @@ export function App() {
                   </select>{" "}
                   <button type="button" onClick={() => startEditing(todo)}>
                     Edit
+                  </button>{" "}
+                  <button type="button" onClick={() => removeTodo(todo)}>
+                    Delete
                   </button>
                 </>
               )}
