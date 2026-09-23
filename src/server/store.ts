@@ -1,23 +1,10 @@
-import { normalisePriority, type Priority, type Todo } from "../shared/todo";
+import { type Priority, type Todo } from "../shared/todo";
 import type { Database } from "./db";
-
-type TodoRow = {
-  id: number;
-  title: string;
-  done: number;
-  priority: string;
-  created_at: string;
-};
-
-function rowToTodo(row: TodoRow): Todo {
-  return {
-    id: row.id,
-    title: row.title,
-    done: row.done === 1,
-    priority: normalisePriority(row.priority) ?? "medium",
-    createdAt: row.created_at,
-  };
-}
+import {
+  createTodosRepository,
+  rowToTodo,
+  type TodoRow,
+} from "./todos-repository";
 
 export type TodoPatch = {
   title?: string;
@@ -104,19 +91,14 @@ export function createD1TodoStore(db: D1DatabaseBinding): TodoStore {
 }
 
 export function createSqliteTodoStore(db: Database): TodoStore {
-  const selectAll = db.prepare("SELECT * FROM todos ORDER BY id");
-  const selectOne = db.prepare("SELECT * FROM todos WHERE id = ?");
+  const repo = createTodosRepository(db);
   const insert = db.prepare("INSERT INTO todos (title, priority) VALUES (?, ?)");
 
-  const findTodo = (id: number): Todo | null => {
-    const row = selectOne.get(id) as TodoRow | undefined;
-    return row ? rowToTodo(row) : null;
-  };
+  const findTodo = (id: number): Todo | null => repo.find(id);
 
   return {
     async list(): Promise<Todo[]> {
-      const rows = selectAll.all() as TodoRow[];
-      return rows.map(rowToTodo);
+      return repo.list();
     },
 
     async create(input: { title: string; priority: Priority }): Promise<Todo> {
