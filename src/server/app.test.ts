@@ -307,7 +307,9 @@ for (const { name, build } of backends) {
     });
 
     it("returns 404 when deleting an unknown todo", async () => {
-      expect((await remove(99)).status).toBe(404);
+      const res = await remove(99);
+      expect(res.status).toBe(404);
+      expect(await res.json()).toEqual({ error: "not found" });
     });
   });
 }
